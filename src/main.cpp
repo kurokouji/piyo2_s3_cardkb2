@@ -32,6 +32,13 @@
 #define CHANNEL_HUNT_MS     3000  // 何 ms 受信が無ければ次のチャンネルへ移るか
 #define ECHO_TEXT           1     // 1: 変換後の文字をシリアルの "TEXT>" 行にも連結表示する
 
+// タッチ音 (piyopiyo-pcb のブザーを tone() で PWM 駆動)
+#define BEEP_ENABLE         1     // 0: 消音
+#define BEEP_PIN            D0    // ブザー出力ピン
+#define BEEP_MS             12    // 鳴動時間 (ms)。キーリピート間隔 50ms より短くする
+#define BEEP_FREQ           2600  // 文字キーの音程 (Hz)
+#define BEEP_FREQ_SP        1500  // 特殊キー (Del/Ent/Space/Aa/Sym/Fn) の音程 (Hz)
+
 // 送信元 MAC フィルタ (なりすまし対策)
 //   ESP-NOW のブロードキャストは認証されないため、同じ形式のフレームを投げれば
 //   誰でも偽のキー入力を注入できる。ここに CardKB2 の MAC を書くと他を無視する。
@@ -371,6 +378,16 @@ static void printModifiers()
                 (g_fnHeld ? "FN" : ""));
 }
 
+// tone() はキューに積むだけで別タスクが鳴らすため、呼び出し側はブロックしない
+static inline void beep(unsigned int freq)
+{
+#if BEEP_ENABLE
+  tone(BEEP_PIN, freq, BEEP_MS);
+#else
+  (void)freq;
+#endif
+}
+
 // =============================================================================
 //  キーイベント 1 件の処理
 // =============================================================================
@@ -378,6 +395,9 @@ static void handleKey(uint8_t keyId, uint8_t state)
 {
   const bool pressed = (state == 0x01);
   const KeyDef &k    = KEYMAP[keyId];
+
+  // 押下時にタッチ音（長押しリピートでも 1 回ずつ鳴る）
+  if (pressed) beep(k.name ? BEEP_FREQ_SP : BEEP_FREQ);
 
   bool modeChanged = false;
 
@@ -562,6 +582,11 @@ void setup()
   // --- メイン画面へ ---
   for (int r = 0; r < TXT_ROWS; r++) { g_txt[r][0] = '\0'; g_txtLen[r] = 0; }
   lcdDrawStatic();
+
+  // 起動完了の合図（ブザーの動作確認も兼ねる）
+  beep(BEEP_FREQ_SP);
+  delay(90);
+  beep(BEEP_FREQ);
 }
 
 void loop()
