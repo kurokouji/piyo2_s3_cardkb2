@@ -108,7 +108,8 @@ CardKB2 のキーを押すと LCD とシリアルの両方に反映されます�
 起動完了時にも 2 音鳴ります。
 
 `tone()` はキューに積むだけで別タスクが鳴らすため、受信処理をブロックしません。
-音程・長さの変更や消音は [6章の設定](#6-設定srcmaincpp-冒頭のマクロ)を参照してください。
+**ON/OFF は `platformio.ini` の `-DBEEP_ENABLE=1` / `=0` で切り替えます**（デフォルト ON）。
+音程・長さは [6章の設定](#6-設定srcmaincpp-冒頭のマクロ)を参照してください。
 
 ---
 
@@ -200,11 +201,28 @@ Aa（大文字）や Sym（記号）の状態は CardKB2 の内部にあり、�
 | `CHANNEL_HUNT_MS` | `3000` | 受信が無いとき次のチャンネルへ移るまでの時間 (ms)。`CHANNEL_HUNT=1` のときのみ有効 |
 | `ECHO_TEXT` | `1` | 1 = 変換後の文字をシリアルの `TEXT>` 行にも連結表示する |
 | `ALLOWED_MAC[6]` | 全て `0x00` | 送信元 MAC フィルタ。全て 0 なら制限なし。CardKB2 の MAC を書くと他の送信元を無視する（→ [8章](#8-セキュリティ上の注意)） |
-| `BEEP_ENABLE` | `1` | 0 = タッチ音を消す |
 | `BEEP_PIN` | `D0` | ブザーの出力ピン |
 | `BEEP_MS` | `12` | 鳴動時間 (ms)。キーリピート間隔 50ms より短くする |
 | `BEEP_FREQ` | `2600` | 文字キーの音程 (Hz) |
 | `BEEP_FREQ_SP` | `1500` | 特殊キー（Del / Ent / Space / Aa / Sym / Fn）の音程 (Hz) |
+
+### `platformio.ini` の `build_flags`
+
+| フラグ | 既定値 | 説明 |
+| --- | --- | --- |
+| `HW_VERSION` | `16` | 基板リビジョン。16 = v1.6 以降 / 15 = v1.5 以前（LCD の CS ピンが異なる） |
+| `ARDUINO_USB_CDC_ON_BOOT` | `1` | `Serial` を USB CDC にする |
+| `BEEP_ENABLE` | `1` | **タッチ音の ON/OFF。1 = 鳴らす（デフォルト） / 0 = 消音** |
+
+```ini
+build_flags =
+    -DHW_VERSION=16
+    -DARDUINO_USB_CDC_ON_BOOT=1
+    -DBEEP_ENABLE=1          ; タッチ音 1=ON(デフォルト) / 0=OFF
+```
+
+消音にするには `-DBEEP_ENABLE=0` に変えて再ビルドします（ブザー関連のコードごと
+除外されるので、Flash が約 6.6KB 減ります）。
 
 ---
 

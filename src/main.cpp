@@ -33,7 +33,11 @@
 #define ECHO_TEXT           1     // 1: 変換後の文字をシリアルの "TEXT>" 行にも連結表示する
 
 // タッチ音 (piyopiyo-pcb のブザーを tone() で PWM 駆動)
-#define BEEP_ENABLE         1     // 0: 消音
+// ON/OFF は platformio.ini の build_flags で切り替える:
+//   -DBEEP_ENABLE=1 … 鳴らす (デフォルト)  /  -DBEEP_ENABLE=0 … 消音
+#ifndef BEEP_ENABLE
+#define BEEP_ENABLE         1     // platformio.ini で指定がない場合のフォールバック
+#endif
 #define BEEP_PIN            D0    // ブザー出力ピン
 #define BEEP_MS             12    // 鳴動時間 (ms)。キーリピート間隔 50ms より短くする
 #define BEEP_FREQ           2600  // 文字キーの音程 (Hz)
